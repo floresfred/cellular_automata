@@ -14,7 +14,7 @@ import matplotlib.animation as animation
 
 class BinaryState(object):
 
-    def __init__(self, size=30, neighbors=4, code='942', seed_type='center'):
+    def __init__(self, size=30, neighbors=4, code='942', seed_type='center', boundary_type='fixed'):
 
         assert isinstance(size, int), 'Invalid integer for \'size\''
         if np.mod(size, 2) == 0:
@@ -23,15 +23,58 @@ class BinaryState(object):
         self.shape = (self.size, self.size)
 
         assert isinstance(neighbors, int), 'Invalid integer for \'neighborhood\''
-        assert neighbors in [4, 8], 'Invalid neighborhood. 4 = Von Neumann, 8 = Moore'
+        assert neighbors in [4, 8], 'Invalid neighborhood. Enter 4 = Von Neumann or 8 = Moore'
         self.neighbors = neighbors
 
         assert code in rules_2d.rule.keys(), 'Invalid code'
         self.code = code
-        self.update_cell = rules_2d.rule[code]
+        self.update_cell = rules_2d.rule[code][0]  #  implementation of active cell update
+        self.title = rules_2d.rule[code][1]
 
         assert seed_type in ['center', 'random'], 'Invalid seed type. Enter \'center\' or \'random\''
         self.seed_type = seed_type
+
+        assert boundary_type in ['periodic', 'reflexive', 'fixed'], \
+            'Invalid border type, Enter \'periodic\' or \'reflexive\' or \'fixed\''
+        self.boundary_type = boundary_type
+
+    def append_boundary(self, x):
+        if self.boundary_type == 'fixed':
+
+            zero_col = np.zeros(x[:, :1].shape).reshape(-1, 1)
+            x = np.append(zero_col, x, axis=1)
+            x = np.append(x, zero_col, axis=1)
+
+            zero_row = np.zeros(x[:1, :].shape)
+            x = np.append(zero_row, x, axis=0)
+            x = np.append(x, zero_row, axis=0)
+
+        if self.boundary_type == 'periodic':
+
+            left_col = x[:, :1]
+            right_col = x[:, -1:]
+            x = np.append(right_col, x, axis=1)
+            x = np.append(x, left_col, axis=1)
+
+            top_row = x[:1, :]
+            bot_row = x[-1:, :]
+            x = np.append(bot_row, x, axis=0)
+            x = np.append(x, top_row, axis=0)
+
+        if self.boundary_type == 'reflexive':
+            left_col = x[:, :1]
+            right_col = x[:, -1:]
+
+            x = np.append(x, right_col, axis=1)
+            x = np.append(left_col, x, axis=1)
+
+            top_row = x[:1, :]
+            bot_row = x[-1:, :]
+
+            x = np.append(x, bot_row, axis=0)
+            x = np.append(top_row, x, axis=0)
+
+        return x
 
     def seed(self):
         """Return an initial matrix initialized with a random or fixed states."""
@@ -47,20 +90,21 @@ class BinaryState(object):
         return x
 
     def update_grid(self, x):
-        """Apply rule to grid"""
+        """Update every cell in the grid. This is a single step in the evolution."""
 
+        x = self.append_boundary(x)  # the boundary is recomputed at each step
         y = np.copy(x)
 
-        index = np.arange(1, x.shape[0] - 1)  # ignore the cells on the matrix edge
+        index = np.arange(1, x.shape[0] - 1)  # ignore the cells on the boundary
         for i in index:
             for j in index:
                 neighborhood = x[i - 1:i + 2:1, j - 1:j + 2:1]  # 3x3 sub matrix centered at i, j
                 y[i, j] = self.update_cell(neighborhood)
 
-        return y
+        return y[1:-1:1, 1:-1:1]  # remove the boundary
 
     def grid_frame(self, steps):
-        """ Compute the grid at step"""
+        """ Compute the final grid at given number of steps"""
 
         x = self.seed()
 
@@ -75,8 +119,8 @@ class BinaryState(object):
         return x
 
     def grid_animation(self, steps, figure_size=(12, 12), speed=100):
+        """Display a step by step animation of the cellular automata rule. """
 
-        assert steps < self.size, 'Number of steps exceeds size of matrix.'
         steps -= 1
 
         x = self.seed()
@@ -91,7 +135,7 @@ class BinaryState(object):
 
             counter += 1
             x = self.update_grid(x)
-            plt.title('Rule: ' + self.code + ' | Step: ' + str(counter), fontsize=14)
+            plt.title(self.title + ' | Step: ' + str(counter), fontsize=14)
 
             im.set_array(np.copy(x))
 

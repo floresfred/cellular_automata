@@ -20,7 +20,7 @@ def rule_942(x):
     return next_state
 
 
-def rule_conway(x):
+def rule_110(x):
 
     current_state = int(x[1, 1])
     N = int(np.sum(x) - current_state)
@@ -42,7 +42,7 @@ def rule_conway(x):
     return next_state
 
 
-rule = {'942': rule_942,
-        'conway': rule_conway}
+rule = {'942': (rule_942, 'Rule 942'),
+        '110': (rule_110, 'Rule 110 Conway\'s Game of Life')}
 
 
