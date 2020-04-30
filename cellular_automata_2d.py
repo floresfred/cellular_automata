@@ -6,6 +6,7 @@ __date__ = '2020-04-27'
 __email__ = 'fredflorescfa@gmail.com'
 
 from cellular_automata import rules_2d
+from cellular_automata import seeds_2d
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -18,7 +19,7 @@ class BinaryState(object):
 
         assert isinstance(size, int), 'Invalid integer for \'size\''
         if np.mod(size, 2) == 0:
-            size += 1
+            size += 1  # give the matrix a true center cell
         self.size = size
         self.shape = (self.size, self.size)
 
@@ -28,15 +29,14 @@ class BinaryState(object):
 
         assert code in rules_2d.rule.keys(), 'Invalid code'
         self.code = code
-        self.update_cell = rules_2d.rule[code][0]  #  implementation of active cell update
+        self.update_cell = rules_2d.rule[code][0]  # implementation of active cell update
         self.title = rules_2d.rule[code][1]
-
-        assert seed_type in ['center', 'random'], 'Invalid seed type. Enter \'center\' or \'random\''
-        self.seed_type = seed_type
 
         assert boundary_type in ['periodic', 'reflexive', 'fixed'], \
             'Invalid border type, Enter \'periodic\' or \'reflexive\' or \'fixed\''
         self.boundary_type = boundary_type
+
+        self.seed = seeds_2d.initialize[seed_type](self.shape)
 
     def append_boundary(self, x):
         if self.boundary_type == 'fixed':
@@ -76,19 +76,6 @@ class BinaryState(object):
 
         return x
 
-    def seed(self):
-        """Return an initial matrix initialized with a random or fixed states."""
-
-        if self.seed_type == 'center':
-            center = int(self.size/2)
-            x = np.zeros(self.shape)
-            x[center, center] = 1
-
-        if self.seed_type == 'random':
-            x = np.random.randint(0, 2, self.shape)
-
-        return x
-
     def update_grid(self, x):
         """Update every cell in the grid. This is a single step in the evolution."""
 
@@ -106,8 +93,7 @@ class BinaryState(object):
     def grid_frame(self, steps):
         """ Compute the final grid at given number of steps"""
 
-        x = self.seed()
-
+        x = self.seed
         for n in np.arange(0, steps):
             x = self.update_grid(x)
 
@@ -122,12 +108,11 @@ class BinaryState(object):
         """Display a step by step animation of the cellular automata rule. """
 
         steps -= 1
-
-        x = self.seed()
+        x = self.seed
 
         fig = plt.figure(figsize=figure_size)
         color_map = matplotlib.colors.ListedColormap(['white', 'black'])
-        im = plt.imshow(x, interpolation='nearest', cmap=color_map, animated=True)
+        im = plt.imshow(x[1:-1:1,1:-1:1], interpolation='nearest', cmap=color_map, animated=True)
         counter = 0
 
         def update_figure(*args):
@@ -137,7 +122,7 @@ class BinaryState(object):
             x = self.update_grid(x)
             plt.title(self.title + ' | Step: ' + str(counter), fontsize=14)
 
-            im.set_array(np.copy(x))
+            im.set_array(x[1:-1:1,1:-1:1])
 
             return im,  # why is this comma necessary?
 
