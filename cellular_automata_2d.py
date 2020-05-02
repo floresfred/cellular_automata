@@ -77,32 +77,59 @@ class BinaryState(object):
         return x
 
     def update_grid(self, x):
-        """Update every cell in the grid. This is a single step in the evolution."""
+        """Update every cell in the grid. This is a single step in the evolution.
+           Compute number in each state and number of state changes."""
 
+        # Append boundary rows and columns to matrix
         x = self.append_boundary(x)  # the boundary is recomputed at each step
         y = np.copy(x)
 
-        index = np.arange(1, x.shape[0] - 1)  # ignore the cells on the boundary
+        # For each cell within boundary, compute state according to rules.
+        chg_0_1 = 0  # the number of cells that changed from state 0 to state 1
+        chg_1_0 = 0  # the number of cells that changes from state 1 to state 0
+        chg_none = 0  # the number of cells that did not change
+        index = np.arange(1, x.shape[0] - 1)
         for i in index:
             for j in index:
                 neighborhood = x[i - 1:i + 2:1, j - 1:j + 2:1]  # 3x3 sub matrix centered at i, j
                 y[i, j] = self.update_cell(neighborhood)
+                change = int(y[i, j] - x[i, j])
+                if change == -1:
+                    chg_1_0 += 1
+                if change == 0:
+                    chg_none += 1
+                if change == 1:
+                    chg_0_1 += 1
 
-        return y[1:-1:1, 1:-1:1]  # remove the boundary
+        # Compute statistics excluding boundary
+        total = np.power(x[1:-1:1, 1:-1:1].shape[0] - 1, 2)
+        start_1 = np.sum(x[1:-1:1, 1:-1:1])
+        end_1 = np.sum(y[1:-1:1, 1:-1:1])
+        stats = [total, start_1, end_1, chg_1_0, chg_none, chg_0_1]
 
-    def grid_frame(self, steps):
+        return y[1:-1:1, 1:-1:1], stats  # remove the boundary
+
+    def grid_frame(self, steps, figure_size=(12, 12)):
         """ Compute the final grid at given number of steps"""
 
         x = self.seed
+        counts = []
         for n in np.arange(0, steps):
-            x = self.update_grid(x)
+            x, stats = self.update_grid(x)
+            counts.append(stats)
 
+        counts = np.array(counts)
+
+        fig = plt.figure(figsize=figure_size)
         color_map = matplotlib.colors.ListedColormap(['white', 'black'])
         img = plt.imshow(x, interpolation='nearest', cmap=color_map)
         img.axes.grid(False)
         plt.show()
 
-        return x
+        return x, counts
+
+    def stats(self, x):
+        np.array([])
 
     def grid_animation(self, steps, figure_size=(12, 12), speed=100):
         """Display a step by step animation of the cellular automata rule. """
@@ -119,7 +146,7 @@ class BinaryState(object):
             nonlocal x, counter, fig
 
             counter += 1
-            x = self.update_grid(x)
+            x, stats = self.update_grid(x)
             plt.title(self.title + ' | Step: ' + str(counter), fontsize=14)
 
             im.set_array(x[1:-1:1,1:-1:1])

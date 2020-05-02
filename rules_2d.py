@@ -21,20 +21,13 @@ def rule_942(x):
 
 
 def rule_110(x):
-
     current_state = int(x[1, 1])
     N = int(np.sum(x) - current_state)
 
     next_state = 0  # assume everyone dies
 
-    # if (N < 2) & (current_state == 1):  # dies by underpopulation
-    #     next_state = 0
-
     if (N in [2, 3]) & (current_state == 1):  # lives on
         next_state = 1
-
-    # if (N > 3) & (current_state == 1):  # dies by overpopulation
-    #     next_state = 0
 
     if (N == 3) & (current_state == 0):  # reproduction
         next_state = 1
@@ -42,7 +35,28 @@ def rule_110(x):
     return next_state
 
 
+def market(x):
+    current_state = int(x[1, 1])
+    N = int(np.sum(x) - current_state)
+
+    # Value Momentum Trader
+    if (N <= 5) & (current_state == 1):  # buy
+        next_state = 1
+
+    if (N >= 6) & (current_state == 1):  # sell
+        next_state = 0
+
+    # Growth Trader
+    if (N <= 2) & (current_state == 0):  # sell
+        next_state = 0
+    if (N >= 3) & (current_state == 0):  # buy
+        next_state = 1
+
+    return next_state
+
+
 rule = {'942': (rule_942, 'Rule 942'),
-        '110': (rule_110, 'Rule 110 Conway\'s Game of Life')}
+        '110': (rule_110, 'Rule 110 Conway\'s Game of Life'),
+        'market': (market, 'Market')}
 
 
