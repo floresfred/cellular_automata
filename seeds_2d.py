@@ -73,7 +73,7 @@ def glider(shape):
     x[mid_point, mid_point - 1] = 1
     x[mid_point + 1, mid_point - 1] = 1
     x[mid_point + 2, mid_point] = 1
-    return x  # stable 4 square
+    return x  # like a flying bird
 
 
 initialize = {'center': center,

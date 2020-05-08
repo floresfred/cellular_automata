@@ -128,9 +128,6 @@ class BinaryState(object):
 
         return x, counts
 
-    def stats(self, x):
-        np.array([])
-
     def grid_animation(self, steps, figure_size=(12, 12), speed=100):
         """Display a step by step animation of the cellular automata rule. """
 
@@ -157,6 +154,7 @@ class BinaryState(object):
                                       interval=speed, blit=False, repeat=False)
 
         plt.show()
+
 
 
 
