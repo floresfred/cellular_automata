@@ -35,6 +35,39 @@ def rule_110(x):
     return next_state
 
 
+def rule_746(x):
+    current_state = int(x[1, 1])
+    N = int(np.sum(x) - current_state)
+
+    next_state = current_state
+
+    if N == 3:  # reproduction
+        next_state = 1
+
+    if N > 4:  # reproduction
+        next_state = 0
+
+    return next_state
+
+
+def rule_976(x):
+    N = int(np.sum(x))
+
+    if N == 4:  # reproduction
+        next_state = 1
+
+    if N == 5:  # reproduction
+        next_state = 0
+
+    if N < 4:  # reproduction
+        next_state = 0
+
+    if N > 5:  # reproduction
+        next_state = 1
+
+    return next_state
+
+
 def market(x):
     current_state = int(x[1, 1])
     N = int(np.sum(x) - current_state)
@@ -57,6 +90,8 @@ def market(x):
 
 rule = {'942': (rule_942, 'Rule 942'),
         '110': (rule_110, 'Rule 110 Conway\'s Game of Life'),
+        '746': (rule_746, 'Rule 746 Circular Pattern of Growth'),
+        '976': (rule_976, 'Rule 976 Smooth Regional Boundaries'),
         'market': (market, 'Market')}
 
 

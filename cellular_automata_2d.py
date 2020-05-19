@@ -8,6 +8,7 @@ __email__ = 'fredflorescfa@gmail.com'
 from cellular_automata import rules_2d
 from cellular_automata import seeds_2d
 import numpy as np
+import time
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -36,7 +37,8 @@ class BinaryState(object):
             'Invalid border type, Enter \'periodic\' or \'reflexive\' or \'fixed\''
         self.boundary_type = boundary_type
 
-        self.seed = seeds_2d.initialize[seed_type](self.shape)
+        self.seed_type = seed_type
+        self.seed = seeds_2d.initialize[self.seed_type](self.shape)
 
     def append_boundary(self, x):
         if self.boundary_type == 'fixed':
@@ -120,10 +122,13 @@ class BinaryState(object):
 
         counts = np.array(counts)
 
-        fig = plt.figure(figsize=figure_size)
+        fig, ax = plt.subplots(figsize=figure_size)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
         color_map = matplotlib.colors.ListedColormap(['white', 'black'])
         img = plt.imshow(x, interpolation='nearest', cmap=color_map)
         img.axes.grid(False)
+        plt.title(self.title + ' | Step ' + str(steps))
         plt.show()
 
         return x, counts
@@ -134,9 +139,12 @@ class BinaryState(object):
         steps -= 1
         x = self.seed
 
-        fig = plt.figure(figsize=figure_size)
+        fig, ax = plt.subplots(figsize=figure_size)
+        ax.grid(False)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
         color_map = matplotlib.colors.ListedColormap(['white', 'black'])
-        im = plt.imshow(x[1:-1:1,1:-1:1], interpolation='nearest', cmap=color_map, animated=True)
+        im = plt.imshow(x[1:-1:1, 1:-1:1], interpolation='nearest', cmap=color_map, animated=True)
         counter = 0
 
         def update_figure(*args):
@@ -144,17 +152,44 @@ class BinaryState(object):
 
             counter += 1
             x, stats = self.update_grid(x)
-            plt.title(self.title + ' | Step: ' + str(counter), fontsize=14)
-
-            im.set_array(x[1:-1:1,1:-1:1])
+            plt.title(self.title + ' | Step ' + str(counter), fontsize=14)
+            im.set_array(x[1:-1:1, 1:-1:1])
 
             return im,  # why is this comma necessary?
 
         ani = animation.FuncAnimation(fig, update_figure, frames=steps,
                                       interval=speed, blit=False, repeat=False)
 
-        plt.show()
+        return ani
 
+    def get_frames(self, steps):
+        """ Compute all frames"""
+
+        x = self.seed
+        F = [x]
+        counts = []
+        for n in np.arange(0, steps):
+            x, stats = self.update_grid(x)
+            F.append(x)
+
+        return np.array(F)
+
+    def grid_animation_quick(self, frames, iterations=10, fps=0.02, figsize=(6, 6)):
+        """  For Jupyter Notebook Display Only? """
+        color_map = matplotlib.colors.ListedColormap(['white', 'black'])
+
+        fig, ax = plt.subplots(figsize=figsize)
+
+        for r in np.arange(0, iterations):
+            ax.cla()
+            ax.axes.grid(False)
+            ax.set_axis_off()
+            im = ax.imshow(frames[0], cmap=color_map, animated=True)
+            for image, step in zip(frames[1:], np.arange(1, len(frames[1:])+1)):
+                time.sleep(fps)
+                ax.title.set_text('Rule 942 | Step ' + str(step) + ' | Active ' + str(int(np.sum(image))))
+                im.set_data(image)
+                fig.canvas.draw()
 
 
 

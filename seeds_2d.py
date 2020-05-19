@@ -15,6 +15,13 @@ def center(shape):
     return x
 
 
+def center_row_7(shape):
+    mid_point = int(shape[0]/2)
+    x = np.zeros(shape)
+    x[mid_point, mid_point-3:mid_point+4:1] = 1
+    return x
+
+
 def random(shape):
     return np.random.randint(0, 2, shape)
 
@@ -83,4 +90,5 @@ initialize = {'center': center,
               'triomino_3': triomino_3,
               'triomino_4': triomino_4,
               'tetromino_4': tetromino_4,
-              'glider': glider}
+              'glider': glider,
+              'center_row_7': center_row_7}
